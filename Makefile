@@ -5,5 +5,6 @@ mad-open: mad-open.c
 
 .PHONY: install
 
-install:
-	install -m 557 program /usr/bin/mad-open
+install: 
+	mkdir -p ${DESTDIR}${PREFIX}/bin
+	cp -f program ${DESTDIR}${PREFIX}/bin
