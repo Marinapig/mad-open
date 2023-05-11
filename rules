@@ -1,9 +1,0 @@
-video/x-matroska mpv
-video/mp4 mpv
-image/gif mpv
-application/pdf zathura
-application/postscript zathura
-application/epub+zip zathura
-image/png nsxiv
-image/jpeg nsxiv
-text/plain vim

@@ -1,7 +1,0 @@
-2023/05/11 11:39:25 hi!
-2023/05/11 11:39:25 loading files: [/home/user/ah2]
-2023/05/11 11:39:25 reading file: /etc/lf/lfrc
-2023/05/11 11:39:25 loading files: [/home/user/ah2]
-2023/05/11 11:39:26 shell: ${{ program $fx >/dev/null 2>&1 ... }} -- []
-2023/05/11 11:39:26 error: running shell: exit status 127
-2023/05/11 11:39:27 bye!
