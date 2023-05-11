@@ -3,6 +3,9 @@
 #include <magic.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
+
+#include <fcntl.h>
 
 #define RULES_SIZE 255
 
@@ -16,7 +19,7 @@ static Association rules[RULES_SIZE];
 
 static void init(void)
 {
-	FILE *file = fopen("rules", "r");
+	FILE *file = fopen("/media/backup/src/c/xdg/rules", "r");
 	if (!file)
 		return;
 	char *line;
@@ -63,10 +66,31 @@ int main(int argc, char **argv)
 	}
 	init();
 	int wh = which(mime);
+	bool shouldfork = ( strstr(mime, "text/") ) == NULL; //Maybe this should be specifiable in the rules file?
 	magic_close(magic);
 	if (wh != -1)
 	{
 		char *args[] = { rules[wh].program, argv[1] , 0};
+		if (shouldfork)
+		{
+			int fd = open("/dev/null", O_WRONLY);
+			if (fd == -1)
+			{
+				perror("Could not open file");
+				return EXIT_FAILURE;
+			}
+			if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
+			{
+				perror("One or more calls to dup2 failed");
+				close(fd);
+				return EXIT_FAILURE;
+			}
+			close(fd);
+		}
 		execvp(args[0], args);
+	}
+	else
+	{
+		fputs("Couldn't match mime type to a rule", stderr);
 	}
 }
