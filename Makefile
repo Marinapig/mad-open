@@ -7,4 +7,4 @@ mad-open: mad-open.c
 
 install: 
 	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp -f program ${DESTDIR}${PREFIX}/bin
+	cp -f mad-open ${DESTDIR}${PREFIX}/bin
