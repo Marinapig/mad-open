@@ -7,22 +7,31 @@
 
 #include <fcntl.h>
 
+#include "file.h"
+#include "char.h"
+
 #define RULES_SIZE 255
 
 typedef struct
 {
 	char mime[24];
 	char program[24];
+	bool wildcard;
 } Association;
 
 static Association rules[RULES_SIZE];
 
 static void init(void)
 {
-	FILE *file = fopen("/media/backup/src/c/xdg/rules", "r");
+	char *filename = getConfigFile();
+	FILE *file = fopen(filename, "r");
+	free(filename);
 	if (!file)
-		return;
-	char *line;
+	{
+		perror("Couldn't open file");
+		exit(EXIT_FAILURE);
+	}
+	char *line = 0;
 	size_t size;
 	for(int i = 0; i < RULES_SIZE; i++)
 	{
@@ -30,21 +39,33 @@ static void init(void)
 		{
 			free(line);
 			break;
-			sscanf(line, "%23s %23s", rules[i].mime, rules[i].program);
 		}
-		sscanf(line, "%23s %23s", rules[i].mime, rules[i].program);
+		rules[i].wildcard = false;
+		char *san = removechar('*', line, &rules[i].wildcard); 
+		if (!san)
+		{
+			perror("removechar failed");
+			exit(EXIT_FAILURE);
+		}
+		sscanf(san, "%23s %23s", rules[i].mime, rules[i].program);
+		free(san);
 	}
 	fclose(file);
 }
 
-int which(const char *s)
+Association* which(const char *s)
 {
 	for(int i = 0; i < RULES_SIZE; i++)
 	{
-		if (!strcmp(s, rules[i].mime) )
-			return i;
+		if (rules[i].wildcard)
+		{
+			if (strstr(s, rules[i].mime) )
+				return &rules[i];
+		}
+		else if (!strcmp(s, rules[i].mime) )
+			return &rules[i];
 	}
-	return -1;
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -59,18 +80,20 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	magic_load(magic, NULL);
 	mime = magic_file(magic, argv[1]);
-	if (!mime)
+	if (!mime || strstr(mime, "No such file or directory") ) //magic_file still returns a string even if it cant find the file, there might be more errors of this nature
 	{
 		magic_close(magic);
+		perror("Couldn't open the file");
 		return EXIT_FAILURE;
 	}
 	init();
-	int wh = which(mime);
-	bool shouldfork = ( strstr(mime, "text/") ) == NULL; //Maybe this should be specifiable in the rules file?
-	magic_close(magic);
-	if (wh != -1)
+	Association *found = which(mime);
+	bool shouldfork = ( strstr(mime, "text/") ) == NULL; //Maybe this should be specifiable in the rules file
+	if (found)
 	{
-		char *args[] = { rules[wh].program, argv[1] , 0};
+		magic_close(magic);
+		char *args[] = { found->program, argv[1] , 0};
+		#ifndef NDEBUG
 		if (shouldfork)
 		{
 			int fd = open("/dev/null", O_WRONLY);
@@ -88,9 +111,13 @@ int main(int argc, char **argv)
 			close(fd);
 		}
 		execvp(args[0], args);
+		#else
+		printf("%s %s\n", args[0], args[1]);
+		#endif
 	}
 	else
 	{
-		fputs("Couldn't match mime type to a rule", stderr);
+		printf("Couldn't match %s to a rule\n", mime);
+		magic_close(magic);
 	}
 }
