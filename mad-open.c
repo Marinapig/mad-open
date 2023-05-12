@@ -7,9 +7,12 @@
 
 #include <fcntl.h>
 
+#include <xdgdirs.h>
+
 #include "file.h"
 #include "char.h"
 #include "magic.h"
+#include "cache.h"
 
 int main(int argc, char **argv)
 {
@@ -33,8 +36,29 @@ int main(int argc, char **argv)
 			foundc = true;
 		}
 	}
+	#ifdef USE_CACHE
+	bool havecache = shouldCache();
+	if (!foundc)
+	{
+		if (!havecache)
+		{
+			puts("Didnt use cache");
+			magic_init(NULL);
+		}
+		else
+		{
+			puts("Used cache");
+			cache_read();
+		}
+	}
+	if (!havecache)
+		cache_build();
+
+	xdgDirs_clear();
+	#else
 	if (!foundc)
 		magic_init(NULL);
+	#endif
 
 	Association *found = magic_getassociation(argv[optind]);
 	if (found)

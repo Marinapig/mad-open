@@ -9,16 +9,18 @@
 #include "file.h"
 #include "char.h"
 
-#define RULES_SIZE 255
+#include "magic_private.h"
 
-static Association rules[RULES_SIZE];
+//#define RULES_SIZE 255
+
+Association rules[RULES_SIZE];
 
 void magic_init(char *s)
 {
 	FILE *file;
 	if (!s)
 	{
-		char *filename = getConfigFile();
+		char *filename = getConfigFile(false);
 		file = fopen(filename, "r");
 		free(filename);
 	}

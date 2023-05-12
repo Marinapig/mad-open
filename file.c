@@ -2,38 +2,35 @@
 #include <linux/limits.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include <unistd.h>
 #include <pwd.h>
 
-char *getConfigFile(void)
+#include <sys/stat.h>
+
+#include <xdgdirs.h>
+
+char *getConfigFile(bool cache)
 {
+	const char *s;
+	if (cache)
+		s = xdgCacheHome();
+	else
+		s = xdgConfigHome();
 	char *buf = malloc(PATH_MAX);
 	if (!buf)
+		exit(EXIT_FAILURE);
+	snprintf(buf, PATH_MAX, "%s/mad-open/%s", s, cache ? "cache" : "rules");
+	return buf;
+}
+
+int file_creationTime(const char *path)
+{
+	struct stat attr;
+	if (stat(path, &attr) == -1)
+	{
 		return 0;
-	char *dir = getenv("XDG_CONFIG_HOME");
-	if (dir)
-	{
-		snprintf(buf, PATH_MAX, "%s/mad-open/rules", dir);
-		strncpy(buf, dir, PATH_MAX);
-		return buf;
 	}
-
-	dir = getenv("HOME");
-	if (dir)
-	{
-		snprintf(buf, PATH_MAX, "%s/.config/mad-open/rules", dir);
-		return buf;
-	}
-
-        struct passwd *pw = getpwuid(getuid());
-	if (pw)
-	{
-		snprintf(buf, PATH_MAX, "%s/.config/mad-open/rules", pw->pw_dir);
-		return buf;
-	}
-
-	perror("Couldn't find a home directory AT ALL");
-	free(buf);
-	exit(EXIT_FAILURE);
+	return attr.st_mtime;
 }
