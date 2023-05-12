@@ -20,7 +20,8 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	int ch;
 	static bool foundc = false;
-	while ((ch = getopt(argc, argv, "c:")) != -1)
+	static bool foundt = false;
+	while ((ch = getopt(argc, argv, "tc:")) != -1)
 	{
 		switch (ch)
 		{
@@ -34,6 +35,10 @@ int main(int argc, char **argv)
 			}
 			magic_init(optarg);
 			foundc = true;
+			break;
+			case 't':
+			foundt = true;
+			break;
 		}
 	}
 	#ifdef USE_CACHE
@@ -60,13 +65,12 @@ int main(int argc, char **argv)
 		magic_init(NULL);
 	#endif
 
-	Association *found = magic_getassociation(argv[optind]);
+	Association *found = magic_getassociation(argv[optind], foundt);
 	if (found)
 	{
-		bool shouldfork = ( strstr(found->mime, "text/") ) == NULL; //Maybe this should be specifiable in the rules file
 		char *args[] = { found->program, argv[optind] , 0};
 		#ifndef NDEBUG
-		if (shouldfork)
+		if (!found->nofork)
 		{
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd == -1)

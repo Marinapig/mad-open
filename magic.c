@@ -49,7 +49,9 @@ void magic_init(char *s)
 			perror("removechar failed");
 			exit(EXIT_FAILURE);
 		}
-		sscanf(san, "%23s %23s", rules[i].mime, rules[i].program);
+		int tempfork = false;
+		sscanf(san, "%64s %24s %d", rules[i].mime, rules[i].program, &tempfork);
+		rules[i].nofork = tempfork;
 		free(san);
 	}
 	fclose(file);
@@ -70,7 +72,7 @@ static Association* magic_which(const char *s)
 	return 0;
 }
 
-Association* magic_getassociation(const char *s)
+Association* magic_getassociation(const char *s, bool text_generic)
 {
 	magic_t magic;
 	const char *mime;
@@ -78,6 +80,9 @@ Association* magic_getassociation(const char *s)
 	magic = magic_open(MAGIC_MIME_TYPE);
 	if (!magic)
 		return 0;
+	if (text_generic) //Treat all text files as the same mime type
+		magic_setflags(magic, magic_getflags(magic) | MAGIC_NO_CHECK_TEXT);
+
 	magic_load(magic, NULL);
 	mime = magic_file(magic, s);
 	if (!mime || strstr(mime, "No such") )
