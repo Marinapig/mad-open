@@ -1,5 +1,5 @@
 LIBS = -lmagic -lXDGdirs
-SRC = mad-open.c file.c char.c magic.c cache.c
+SRC = mad-open.c file.c char.c magic.c
 DEBUG_FLAGS = -DNDEBUG -ggdb
 FLAGS_COMMON = -Wpedantic
 

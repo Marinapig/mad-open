@@ -24,13 +24,3 @@ char *getConfigFile(bool cache)
 	snprintf(buf, PATH_MAX, "%s/mad-open/%s", s, cache ? "cache" : "rules");
 	return buf;
 }
-
-int file_creationTime(const char *path)
-{
-	struct stat attr;
-	if (stat(path, &attr) == -1)
-	{
-		return 0;
-	}
-	return attr.st_mtime;
-}

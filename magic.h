@@ -10,7 +10,7 @@ typedef struct
 	bool wildcard;
 	bool nofork;
 } Association;
-static Association* magic_which(const char *s);
 void magic_init(char *s);
-Association* magic_getassociation(const char *s, bool text_generic);
+char *get_mimetype(const char *filename, bool text_generic);
+bool magic_grep(const char *filename, char *mime, Association *rule);
 #endif

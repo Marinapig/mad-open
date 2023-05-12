@@ -12,15 +12,15 @@
 #include "file.h"
 #include "char.h"
 #include "magic.h"
-#include "cache.h"
 
 int main(int argc, char **argv)
 {
 	if (argc < 2)
 		return EXIT_FAILURE;
 	int ch;
-	static bool foundc = false;
-	static bool foundt = false;
+	bool foundc = false;
+	bool foundt = false;
+	char *cval = 0;
 	while ((ch = getopt(argc, argv, "tc:")) != -1)
 	{
 		switch (ch)
@@ -33,7 +33,8 @@ int main(int argc, char **argv)
 				perror("");
 				return EXIT_FAILURE;
 			}
-			magic_init(optarg);
+			cval = calloc(strlen(optarg) + 1, sizeof(char) );
+			strcpy(cval, optarg);
 			foundc = true;
 			break;
 			case 't':
@@ -41,36 +42,34 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	#ifdef USE_CACHE
-	bool havecache = shouldCache();
-	if (!foundc)
+	char *mime = get_mimetype(argv[optind], foundt);
+	if (!mime)
 	{
-		if (!havecache)
-		{
-			puts("Didnt use cache");
-			magic_init(NULL);
-		}
-		else
-		{
-			puts("Used cache");
-			cache_read();
-		}
+		perror("Couldn't get mimetype");
+		exit(EXIT_FAILURE);
 	}
-	if (!havecache)
-		cache_build();
+	char *filename;
+	if (foundc)
+		filename = cval;
+	else
+		filename = getConfigFile(false);
 
-	xdgDirs_clear();
-	#else
-	if (!foundc)
-		magic_init(NULL);
-	#endif
-
-	Association *found = magic_getassociation(argv[optind], foundt);
-	if (found)
+	if (!filename)
 	{
-		char *args[] = { found->program, argv[optind] , 0};
+		free(mime);
+		perror("Couldn't get rules filename");
+		exit(EXIT_FAILURE);
+	}
+	Association found;
+	bool didfind = magic_grep(filename, mime, &found);
+	free(filename);
+	free(mime);
+	xdgDirs_clear();
+	if (didfind)
+	{
+		char *args[] = { found.program, argv[optind] , 0};
 		#ifndef NDEBUG
-		if (!found->nofork)
+		if (!found.nofork)
 		{
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd == -1)

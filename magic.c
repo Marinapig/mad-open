@@ -9,70 +9,7 @@
 #include "file.h"
 #include "char.h"
 
-#include "magic_private.h"
-
-//#define RULES_SIZE 255
-
-Association rules[RULES_SIZE];
-
-void magic_init(char *s)
-{
-	FILE *file;
-	if (!s)
-	{
-		char *filename = getConfigFile(false);
-		file = fopen(filename, "r");
-		free(filename);
-	}
-	else
-		file = fopen(s, "r");
-
-	if (!file)
-	{
-		perror("Couldn't open config file");
-		exit(EXIT_FAILURE);
-	}
-
-	char *line = 0;
-	size_t size;
-	for(int i = 0; i < RULES_SIZE; i++)
-	{
-		if (getline(&line, &size, file) == -1)
-		{
-			free(line);
-			break;
-		}
-		rules[i].wildcard = false;
-		char *san = removechar('*', line, &rules[i].wildcard); 
-		if (!san)
-		{
-			perror("removechar failed");
-			exit(EXIT_FAILURE);
-		}
-		int tempfork = false;
-		sscanf(san, "%64s %24s %d", rules[i].mime, rules[i].program, &tempfork);
-		rules[i].nofork = tempfork;
-		free(san);
-	}
-	fclose(file);
-}
-
-static Association* magic_which(const char *s)
-{
-	for(int i = 0; i < RULES_SIZE; i++)
-	{
-		if (rules[i].wildcard)
-		{
-			if (strstr(s, rules[i].mime) )
-				return &rules[i];
-		}
-		else if (!strcmp(s, rules[i].mime) )
-			return &rules[i];
-	}
-	return 0;
-}
-
-Association* magic_getassociation(const char *s, bool text_generic)
+char *get_mimetype(const char *filename, bool text_generic)
 {
 	magic_t magic;
 	const char *mime;
@@ -84,16 +21,58 @@ Association* magic_getassociation(const char *s, bool text_generic)
 		magic_setflags(magic, magic_getflags(magic) | MAGIC_NO_CHECK_TEXT);
 
 	magic_load(magic, NULL);
-	mime = magic_file(magic, s);
+	mime = magic_file(magic, filename);
 	if (!mime || strstr(mime, "No such") )
 	{
 		magic_close(magic);
 		perror("Couldn't get mime type from file");
 		return 0;
 	}
-	Association *found = magic_which(mime);
-	if (!found)
-		fprintf(stderr, "No rule association for %s\n", mime);
+	size_t size = strlen(mime);
+	char *ret = calloc(size + 1, sizeof(char));
+	strcpy(ret, mime);
 	magic_close(magic);
-	return found;
+	return ret;
+}
+
+bool magic_grep(const char *filename, char *mime, Association *rule)
+{
+	FILE *file;
+	file = fopen(filename, "r");
+	if (!file)
+	{
+		perror("Couldn't open rules file");
+		return false;
+	}
+
+	bool ret = false;
+	char *line = 0;
+	size_t size;
+	if (!rule)
+	{
+		perror("Couldn't allocate memory for a rule");
+		exit(EXIT_FAILURE);
+	}
+	while (getline(&line, &size, file) != -1)
+	{
+		rule->wildcard = false;
+		char *san = removechar('*', line, &rule->wildcard);
+		if (!san)
+		{
+			perror("removechar failed");
+			exit(EXIT_FAILURE);
+		}
+		int tempfork = false;
+		sscanf(san, "%64s %24s %d", rule->mime, rule->program, &tempfork);
+		rule->nofork = tempfork;
+		free(san);
+		if (rule->wildcard && strstr(mime, rule->mime) || (!strcmp(rule->mime, mime)) )
+		{
+			ret = true;
+			break;
+		}
+	}
+	fclose(file);
+	free(line);
+	return ret;
 }
