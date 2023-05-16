@@ -2,15 +2,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <assert.h>
 
 char *removechar(char needle, const char *haystack, bool *found)
 {
+	assert(found != NULL && "Bool passed to removechar was not initialized");
+	/*
+	if (!found)
+	{
+		perror("Bool passed to removechar was not initialized");
+		return NULL;
+	}
+	*/
 	char *ret = calloc(strlen(haystack) + 1, sizeof(char));
-
 	if (!ret)
 	{
 		perror("Couldn't allocate memory");
-		return 0;
+		return NULL;
 	}
 	char *start = ret;
 	while (*haystack)
@@ -18,14 +26,15 @@ char *removechar(char needle, const char *haystack, bool *found)
 		if (*haystack == needle)
 		{
 			*found = true;
-			goto incstack;
 		}
-		*start = *haystack;
-		++start;
-		incstack:
+		else
+		{
+			*start = *haystack;
+			++start;
+		}
 		++haystack;
 	}
-	start = '\0';
+	start = 0;
 	return ret;
 }
 

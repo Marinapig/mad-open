@@ -1,13 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <magic.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdbool.h>
 
 #include <fcntl.h>
+#include <unistd.h>
 
 #include <xdgdirs.h>
+#include <magic.h>
+#include <getopt.h>
 
 #include "file.h"
 #include "char.h"
@@ -45,7 +46,7 @@ int main(int argc, char **argv)
 	char *mime = get_mimetype(argv[optind], foundt);
 	if (!mime)
 	{
-		perror("Couldn't get mimetype");
+		perror("Couldn't get mimetype\nExiting.");
 		exit(EXIT_FAILURE);
 	}
 	char *filename;
@@ -57,31 +58,31 @@ int main(int argc, char **argv)
 	if (!filename)
 	{
 		free(mime);
-		perror("Couldn't get rules filename");
+		perror("Couldn't get rules filename\nExiting.");
 		exit(EXIT_FAILURE);
 	}
 	Association found;
 	bool didfind = magic_grep(filename, mime, &found);
 	free(filename);
-	free(mime);
 	xdgDirs_clear();
 	if (didfind)
 	{
+		free(mime);
 		char *args[] = { found.program, argv[optind] , 0};
-		#ifndef NDEBUG
+		#ifdef NDEBUG
 		if (!found.nofork)
 		{
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd == -1)
 			{
-				perror("Could not open file");
-				return EXIT_FAILURE;
+				perror("Could not open /dev/null\nExiting.");
+				exit(EXIT_FAILURE);
 			}
 			if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
 			{
-				perror("One or more calls to dup2 failed");
+				perror("One or more calls to dup2 failed\nExiting.");
 				close(fd);
-				return EXIT_FAILURE;
+				exit(EXIT_FAILURE);
 			}
 			close(fd);
 		}
@@ -89,5 +90,10 @@ int main(int argc, char **argv)
 		#else
 		printf("%s %s\n", args[0], args[1]);
 		#endif
+	}
+	else
+	{
+		fprintf(stderr, "No program associated with %s\n", mime);
+		free(mime);
 	}
 }
