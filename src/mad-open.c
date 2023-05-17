@@ -21,7 +21,8 @@ int main(int argc, char **argv)
 	bool foundc = false;
 	bool foundt = false;
 	char *cval = 0;
-	while ((ch = getopt(argc, argv, "tc:")) != -1)
+	char *exclude = 0;
+	while ((ch = getopt(argc, argv, "tc:e:")) != -1)
 	{
 		switch (ch)
 		{
@@ -40,7 +41,25 @@ int main(int argc, char **argv)
 			case 't':
 			foundt = true;
 			break;
+			case 'e':
+			if (exclude)
+				break;
+			if (!optarg || *optarg == ':')
+			{
+				perror(0);
+				return EXIT_FAILURE;
+			}
+			exclude = calloc(strlen(optarg) + 1, sizeof(char));
+			strcpy(exclude, optarg);
+			break;
 		}
+	}
+	if (exclude && strstr(argv[optind], exclude))
+	{
+		free(exclude);
+		if (cval)
+			free(cval);
+		return EXIT_FAILURE;
 	}
 	char *mime = get_mimetype(argv[optind], foundt);
 	if (!mime)
