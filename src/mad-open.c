@@ -2,16 +2,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
+#include <getopt.h>
 #include <fcntl.h>
+
 #include <unistd.h>
 
 #include <xdgdirs.h>
 #include <magic.h>
-#include <getopt.h>
 
 #include "file.h"
-#include "char.h"
 #include "magic.h"
 
 int main(int argc, char **argv)
@@ -46,25 +45,24 @@ int main(int argc, char **argv)
 	char *mime = get_mimetype(argv[optind], foundt);
 	if (!mime)
 	{
-		perror("Couldn't get mimetype\nExiting.");
+		perror("Couldn't get mimetype");
 		exit(EXIT_FAILURE);
 	}
 	char *filename;
 	if (foundc)
 		filename = cval;
 	else
-		filename = getConfigFile(false);
+		filename = getConfigFile();
 
 	if (!filename)
 	{
 		free(mime);
-		perror("Couldn't get rules filename\nExiting.");
+		perror("Couldn't get rules filename");
 		exit(EXIT_FAILURE);
 	}
 	Association found;
 	bool didfind = magic_grep(filename, mime, &found);
 	free(filename);
-	xdgDirs_clear();
 	if (didfind)
 	{
 		free(mime);
@@ -75,12 +73,12 @@ int main(int argc, char **argv)
 			int fd = open("/dev/null", O_WRONLY);
 			if (fd == -1)
 			{
-				perror("Could not open /dev/null\nExiting.");
+				perror("Could not open /dev/null");
 				exit(EXIT_FAILURE);
 			}
 			if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
 			{
-				perror("One or more calls to dup2 failed\nExiting.");
+				perror("One or more calls to dup2 failed");
 				close(fd);
 				exit(EXIT_FAILURE);
 			}

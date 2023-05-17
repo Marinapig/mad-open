@@ -7,10 +7,9 @@ typedef struct
 {
 	char mime[MIME_LEN];
 	char program[PROG_LEN];
-	bool wildcard;
 	bool nofork;
 } Association;
 void magic_init(char *s);
 char *get_mimetype(const char *filename, bool text_generic);
-bool magic_grep(const char *filename, char *mime, Association *rule);
+bool magic_grep(const char *filename, const char *mime, Association *rule);
 #endif
