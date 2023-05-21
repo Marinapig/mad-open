@@ -15,6 +15,8 @@
 
 char *get_mimetype(const char *filename, bool text_generic)
 {
+	assert(filename);
+
 	magic_t magic;
 	const char *mime;
 
@@ -39,6 +41,8 @@ char *get_mimetype(const char *filename, bool text_generic)
 
 static inline void reset_rule(Association *rule)
 {
+	assert(rule);
+
 	rule->mime[0] = '\0';
 	rule->nofork = false;
 }
@@ -54,21 +58,27 @@ bool magic_grep(const char *filename, const char *mime, Association *rule)
 	if (!file)
 	{
 		perror("Couldn't open rules file");
-		return false;
+		exit(EXIT_FAILURE);
 	}
 
 	bool ret = false;
 	char *line = 0;
 	size_t size;
 	char options[255];
+	char pad[1];
 	while (getline(&line, &size, file) != -1)
 	{
 		options[0] = '\0';
 		reset_rule(rule);
-		sscanf(line, "%64s %24s %255s", rule->mime, rule->program, options);
+		size_t matched = sscanf(line, "%255s %255s %255s", rule->mime, rule->program, options);
+		if (matched < 2)
+		{
+			puts("Garbage value in config file");
+			exit(EXIT_FAILURE);
+		}
 		rule->nofork = strstr(options, "noclose");
 		regex_t regex;
-		if (regcomp(&regex, rule->mime, REG_NEWLINE))
+		if (regcomp(&regex, rule->mime, 0))
 			exit(EXIT_FAILURE);
 		if (!regexec(&regex, mime, 0, NULL, 0))
 			ret = true;

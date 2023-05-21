@@ -1,8 +1,8 @@
 LIBS = -lmagic -lXDGdirs
 SRC = src/mad-open.c src/file.c src/magic.c
-DEBUG_FLAGS = -ggdb -Og
+DEBUG_FLAGS = -ggdb 
 RELEASE_FLAGS = -DNDEBUG
-FLAGS_COMMON = -pedantic
+FLAGS_COMMON = -pedantic -Werror
 COMMON_BUILD = $(CC) ${SRC} ${CFLAGS} ${FLAGS_COMMON} ${LIBS}
 
 mad-open: ${SRC}

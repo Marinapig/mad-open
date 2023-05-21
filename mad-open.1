@@ -1,0 +1,22 @@
+.TH mad-open 1 "2023-05-19" "pre-release" "mad-open man page"
+.SH NAME
+mad-open \- Open files in a desired program
+.SH SYNOPSIS
+mad-open [options] [file]
+.SH DESCRIPTION
+mad-open opens files in specified programs as defined by a rules file
+.SH OPTIONS
+.IP "-c [config file]"
+Use the specified config file instead of the default
+.IP -t
+Treat all text mime types as the same type (application/octect-stream)
+.IP -e
+Use file extension instead of mime type to match file to a rule
+.SH FILES
+Default rules file at $XDG_CONFIG_HOME/mad-open/rules
+.SH SEE ALSO
+mad-open(5)
+.SH BUGS
+Many.
+.SH AUTHOR
+Marinapig

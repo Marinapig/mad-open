@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <linux/limits.h>
 
@@ -13,4 +14,9 @@ char *getConfigFile(void)
 	snprintf(buf, PATH_MAX, "%s/mad-open/%s", xdgConfigHome(), "rules");
 	xdgDirs_clear();
 	return buf;
+}
+
+char *getFileExt(const char *s)
+{
+	return strrchr(s, '.');
 }

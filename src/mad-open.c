@@ -13,65 +13,62 @@
 #include "file.h"
 #include "magic.h"
 
+#define FLAG_TEXT_GENERIC 1 << 0
+#define FLAG_FILE_EXTENSION 1 << 1
+#define FLAG_PRETEND 1 << 2
+
 int main(int argc, char **argv)
 {
 	if (argc < 2)
 		return EXIT_FAILURE;
 	int ch;
-	bool foundc = false;
-	bool foundt = false;
 	char *cval = 0;
-	char *exclude = 0;
-	while ((ch = getopt(argc, argv, "tc:e:")) != -1)
+	int flags = 0;
+	while ((ch = getopt(argc, argv, "tc:ep")) != -1)
 	{
 		switch (ch)
 		{
 			case 'c': 
-			if (foundc)
-				break;
 			if (!optarg || *optarg == ':')
 			{
 				perror("");
 				return EXIT_FAILURE;
 			}
-			cval = calloc(strlen(optarg) + 1, sizeof(char) );
-			strcpy(cval, optarg);
-			foundc = true;
+			cval = optarg;
 			break;
 			case 't':
-			foundt = true;
+			flags |= FLAG_TEXT_GENERIC;
 			break;
 			case 'e':
-			if (exclude)
-				break;
-			if (!optarg || *optarg == ':')
-			{
-				perror(0);
-				return EXIT_FAILURE;
-			}
-			exclude = calloc(strlen(optarg) + 1, sizeof(char));
-			strcpy(exclude, optarg);
+			flags |= FLAG_FILE_EXTENSION;
+			break;
+			case 'p':
+			flags |= FLAG_PRETEND;
 			break;
 		}
 	}
-	if (exclude && strstr(argv[optind], exclude))
-	{
-		free(exclude);
-		if (cval)
-			free(cval);
-		return EXIT_FAILURE;
-	}
-	char *mime = get_mimetype(argv[optind], foundt);
+	#ifndef NDEBUG
+	flags |= FLAG_PRETEND;
+	#endif
+	char *mime;
+	if (flags & FLAG_FILE_EXTENSION)
+		mime = getFileExt(argv[optind]);
+	else
+		mime = get_mimetype(argv[optind], flags & FLAG_TEXT_GENERIC);
+
 	if (!mime)
 	{
-		perror("Couldn't get mimetype");
+		if (flags & FLAG_FILE_EXTENSION)
+			puts("-e used when file has no extension");
+		else
+			perror("Couldn't get mimetype");
 		exit(EXIT_FAILURE);
 	}
-	char *filename;
-	if (foundc)
-		filename = cval;
-	else
+	char *filename = 0;
+	if (!cval)
 		filename = getConfigFile();
+	else
+		filename = cval;
 
 	if (!filename)
 	{
@@ -81,36 +78,40 @@ int main(int argc, char **argv)
 	}
 	Association found;
 	bool didfind = magic_grep(filename, mime, &found);
-	free(filename);
+	if (!cval) 
+		free(filename);
 	if (didfind)
 	{
-		free(mime);
+		if (!(flags & FLAG_FILE_EXTENSION))
+			free(mime);
 		char *args[] = { found.program, argv[optind] , 0};
-		#ifdef NDEBUG
-		if (!found.nofork)
+		if (flags & FLAG_PRETEND)
+			printf("%s %s %s\n", args[0], args[1], found.nofork ? "noclose" : "" );
+		else
 		{
-			int fd = open("/dev/null", O_WRONLY);
-			if (fd == -1)
+			if (!found.nofork)
 			{
-				perror("Could not open /dev/null");
-				exit(EXIT_FAILURE);
-			}
-			if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
-			{
-				perror("One or more calls to dup2 failed");
+				int fd = open("/dev/null", O_WRONLY);
+				if (fd == -1)
+				{
+					perror("Could not open /dev/null");
+					exit(EXIT_FAILURE);
+				}
+				if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
+				{
+					perror("One or more calls to dup2 failed");
+					close(fd);
+					exit(EXIT_FAILURE);
+				}
 				close(fd);
-				exit(EXIT_FAILURE);
 			}
-			close(fd);
+			execvp(args[0], args);
 		}
-		execvp(args[0], args);
-		#else
-		printf("%s %s\n", args[0], args[1]);
-		#endif
 	}
 	else
 	{
 		fprintf(stderr, "No program associated with %s\n", mime);
-		free(mime);
+		if (!(flags & FLAG_FILE_EXTENSION))
+			free(mime);
 	}
 }
