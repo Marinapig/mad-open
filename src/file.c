@@ -2,19 +2,19 @@
 #include <stdlib.h>
 #include <string.h>
 
-//#include <linux/limits.h>
-
 #include <limits.h>
 
-#include <xdgdirs.h>
+#include <basedir.h>
 
 char *getConfigFile(void)
 {
 	char *buf = malloc(PATH_MAX);
 	if (!buf)
 		exit(EXIT_FAILURE);
-	snprintf(buf, PATH_MAX, "%s/mad-open/%s", xdgConfigHome(), "rules");
-	xdgDirs_clear();
+	xdgHandle handle;
+	xdgInitHandle(&handle);
+	snprintf(buf, PATH_MAX, "%s/mad-open/rules", xdgConfigHome(&handle));
+	xdgWipeHandle(&handle);
 	return buf;
 }
 

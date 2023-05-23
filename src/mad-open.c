@@ -7,7 +7,6 @@
 
 #include <unistd.h>
 
-#include <xdgdirs.h>
 #include <magic.h>
 
 #include "file.h"
@@ -50,6 +49,23 @@ int main(int argc, char **argv)
 	#ifndef NDEBUG
 	flags |= FLAG_PRETEND;
 	#endif
+	char *filename = 0;
+	if (!cval)
+		filename = getConfigFile();
+	else
+		filename = cval;
+
+	if (!filename)
+	{
+		perror("Couldn't get rules filename");
+		exit(EXIT_FAILURE);
+	}
+
+	#ifdef __OpenBSD__
+	//Maybe unveil too, but I need all the stuff in PATH, so I need to figure that out
+	pledge("exec rpath stdio", 0);
+	#endif
+
 	char *mime;
 	if (flags & FLAG_FILE_EXTENSION)
 		mime = getFileExt(argv[optind]);
@@ -62,20 +78,10 @@ int main(int argc, char **argv)
 			puts("-e used when file has no extension");
 		else
 			perror("Couldn't get mimetype");
+		free(filename);
 		exit(EXIT_FAILURE);
 	}
-	char *filename = 0;
-	if (!cval)
-		filename = getConfigFile();
-	else
-		filename = cval;
 
-	if (!filename)
-	{
-		free(mime);
-		perror("Couldn't get rules filename");
-		exit(EXIT_FAILURE);
-	}
 	Association found;
 	bool didfind = magic_grep(filename, mime, &found);
 	if (!cval) 

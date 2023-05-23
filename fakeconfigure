@@ -1,0 +1,10 @@
+#!/bin/sh
+if [ $(uname) = "OpenBSD" ]; then
+toadd="OPENBSD_FLAGS = -I/usr/local/include -L/usr/local/lib"
+sed -i '5 s/^#//' Makefile
+elif [ $(uname) = "Linux" ]; then
+toadd="LINUX_FLAGS = -lbsd"
+sed -i '4 s/^#//' Makefile
+else
+echo "Your platform has not been tested, manual steps may be required to compile this program."
+fi
