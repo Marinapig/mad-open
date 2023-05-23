@@ -2,7 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <linux/limits.h>
+//#include <linux/limits.h>
+
+#include <limits.h>
 
 #include <xdgdirs.h>
 

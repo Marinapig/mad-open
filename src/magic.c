@@ -1,4 +1,3 @@
-#include <string.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -12,6 +11,14 @@
 
 #include "file.h"
 #include "magic.h"
+
+//strlcpy
+#ifdef __linux__
+#include <bsd/string.h>
+#else
+#include <string.h>
+#endif
+
 
 char *get_mimetype(const char *filename, bool text_generic)
 {
@@ -33,8 +40,9 @@ char *get_mimetype(const char *filename, bool text_generic)
 		magic_close(magic);
 		return 0;
 	}
-	char *ret = calloc(strlen(mime) + 1, sizeof(char));
-	strcpy(ret, mime);
+	size_t size = strlen(mime) + 1;
+	char *ret = calloc(size, sizeof(char));
+	strlcpy(ret, mime, size);
 	magic_close(magic);
 	return ret;
 }
