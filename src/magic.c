@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include <regex.h>
 #include <unistd.h>
@@ -42,7 +43,7 @@ char *get_mimetype(const char *filename, bool text_generic)
 	}
 	size_t size = strlen(mime) + 1;
 	char *ret = calloc(size, sizeof(char));
-	strlcpy(ret, mime, size);
+	memcpy(ret, mime, size);
 	magic_close(magic);
 	return ret;
 }
@@ -72,24 +73,32 @@ bool magic_grep(const char *filename, const char *mime, Association *rule)
 	bool ret = false;
 	char *line = 0;
 	size_t size;
-	char options[255];
-	char pad[1];
 	while (getline(&line, &size, file) != -1)
 	{
-		options[0] = '\0';
 		reset_rule(rule);
-		size_t matched = sscanf(line, "%255s %255s %255s", rule->mime, rule->program, options);
-		if (matched < 2)
+		char* mime_p = rule->mime;
+		char *line_p = line;
+		while (line_p && !isspace(*line_p))
 		{
-			puts("Garbage value in config file");
-			exit(EXIT_FAILURE);
+			*(mime_p++) = *(line_p++);
 		}
-		rule->nofork = strstr(options, "noclose");
+		*(mime_p) = '\0';
+		++line_p;
 		regex_t regex;
 		if (regcomp(&regex, rule->mime, 0))
 			exit(EXIT_FAILURE);
 		if (!regexec(&regex, mime, 0, NULL, 0))
+		{
+			char *prog_p = rule->program;
+			while (line_p && prog_p && *line_p != '\n' && (strncmp(line_p, " options", strlen(" options") ) != 0))
+			{
+				*(prog_p++) = *(line_p++);
+			}
+			*(prog_p) = '\0';
+			rule->nofork = strstr(line_p, "noclose");
+			regfree(&regex);
 			ret = true;
+		}
 		regfree(&regex);
 		if (ret)
 			break;

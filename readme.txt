@@ -6,7 +6,7 @@ I'm new to C programming so if there are any deficiencies in this program
 please make an issue or a pull request, thanks.
 
 rules file syntax
-[mimetype] [program] [rules...]
+[mimetype] [program] (optional) options [rules...]
 Current rules are:
 noclose - Doesn't close stdout and stderr, useful when launching command line programs like vim
 

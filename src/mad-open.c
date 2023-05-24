@@ -46,9 +46,6 @@ int main(int argc, char **argv)
 			break;
 		}
 	}
-	#ifndef NDEBUG
-	flags |= FLAG_PRETEND;
-	#endif
 	char *filename = 0;
 	if (!cval)
 		filename = getConfigFile();
@@ -63,7 +60,7 @@ int main(int argc, char **argv)
 
 	#ifdef __OpenBSD__
 	//Maybe unveil too, but I need all the stuff in PATH, so I need to figure that out
-	pledge("exec rpath stdio", 0);
+	pledge("rpath stdio", 0);
 	#endif
 
 	char *mime;
@@ -86,33 +83,14 @@ int main(int argc, char **argv)
 	bool didfind = magic_grep(filename, mime, &found);
 	if (!cval) 
 		free(filename);
+	#ifdef __OpenBSD__
+	pledge("stdio", 0);
+	#endif
 	if (didfind)
 	{
 		if (!(flags & FLAG_FILE_EXTENSION))
 			free(mime);
-		char *args[] = { found.program, argv[optind] , 0};
-		if (flags & FLAG_PRETEND)
-			printf("%s %s %s\n", args[0], args[1], found.nofork ? "noclose" : "" );
-		else
-		{
-			if (!found.nofork)
-			{
-				int fd = open("/dev/null", O_WRONLY);
-				if (fd == -1)
-				{
-					perror("Could not open /dev/null");
-					exit(EXIT_FAILURE);
-				}
-				if (dup2(fd, 1) == -1 || dup2(fd, 2) == -1)
-				{
-					perror("One or more calls to dup2 failed");
-					close(fd);
-					exit(EXIT_FAILURE);
-				}
-				close(fd);
-			}
-			execvp(args[0], args);
-		}
+		printf("%s", found.program);
 	}
 	else
 	{

@@ -1,10 +1,13 @@
 #!/bin/sh
 if [ $(uname) = "OpenBSD" ]; then
-toadd="OPENBSD_FLAGS = -I/usr/local/include -L/usr/local/lib"
-sed -i '5 s/^#//' Makefile
+sed -i 's/\#OPENBSD_FLAGS = -I\/usr\/local\/include -L\/usr\/local\/lib/OPENBSD_FLAGS = -I\/usr\/local\/include -L\/usr\/local\/lib\//' Makefile
+exit
+elif [ $(uname) = "FreeBSD" ]; then
+sed -i 's/\#FREEBSD_FLAGS = -I\/usr\/local\/include -L\/usr\/local\/lib/FREEBSD_FLAGS = -I\/usr\/local\/include -L\/usr\/local\/lib\//' Makefile
+exit
 elif [ $(uname) = "Linux" ]; then
-toadd="LINUX_FLAGS = -lbsd"
-sed -i '4 s/^#//' Makefile
+sed -i 's/\#LINUX_FLAGS = -lbsd/LINUX_FLAGS = -lbsd/' Makefile
+exit
 else
 echo "Your platform has not been tested, manual steps may be required to compile this program."
 fi
