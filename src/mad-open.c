@@ -89,7 +89,7 @@ int main(int argc, char **argv)
 	{
 		if (!(flags & FLAG_FILE_EXTENSION))
 			free(mime);
-		printf("%s", found.program);
+		printf("%s %s", found.nofork ? "-o" : "", found.program);
 	}
 	else
 	{

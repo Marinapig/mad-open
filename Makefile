@@ -20,5 +20,6 @@ debug: ${SRC}
 install: 
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	cp -f mad-open ${DESTDIR}${PREFIX}/bin
+	cp -f get-mad ${DESTDIR}${PREFIX}/bin
 clean:
 	rm -f get-mad

@@ -5,7 +5,6 @@ typedef struct
 {
 	char mime[255];
 	char program[255];
-	char args[255];
 	bool nofork;
 } Association;
 void magic_init(char *s);
