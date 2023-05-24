@@ -14,7 +14,6 @@
 
 #define FLAG_TEXT_GENERIC 1 << 0
 #define FLAG_FILE_EXTENSION 1 << 1
-#define FLAG_PRETEND 1 << 2
 
 int main(int argc, char **argv)
 {
@@ -41,9 +40,6 @@ int main(int argc, char **argv)
 			case 'e':
 			flags |= FLAG_FILE_EXTENSION;
 			break;
-			case 'p':
-			flags |= FLAG_PRETEND;
-			break;
 		}
 	}
 	char *filename = 0;
@@ -59,7 +55,10 @@ int main(int argc, char **argv)
 	}
 
 	#ifdef __OpenBSD__
-	//Maybe unveil too, but I need all the stuff in PATH, so I need to figure that out
+	unveil(argv[optind], "r");
+	unveil(filename, "r");
+	unveil("/usr/local/share/misc/magic.mgc", "r");
+	unveil(0, 0);
 	pledge("rpath stdio", 0);
 	#endif
 

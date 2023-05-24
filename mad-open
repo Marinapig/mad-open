@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo $1 | xargs -o $(./get-mad $1)

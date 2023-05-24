@@ -1,8 +1,8 @@
 LIBS = -lmagic -lxdg-basedir
 SRC = src/mad-open.c src/file.c src/magic.c
 DEBUG_FLAGS = -ggdb -O0 
-LINUX_FLAGS = -lbsd
-#OPENBSD_FLAGS = -I/usr/local/include -L/usr/local/lib
+#LINUX_FLAGS = -lbsd
+#OPENBSD_FLAGS = -I/usr/local/include -L/usr/local/lib//
 #FREEBSD_FLAGS = -I/usr/local/include -L/usr/local/lib
 RELEASE_FLAGS = -DNDEBUG
 FLAGS_COMMON = -pedantic -Werror
@@ -21,4 +21,4 @@ install:
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	cp -f mad-open ${DESTDIR}${PREFIX}/bin
 clean:
-	rm -f mad-open
+	rm -f get-mad
