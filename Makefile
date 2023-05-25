@@ -12,7 +12,7 @@ get-mad: ${SRC}
 	${COMMON_BUILD} ${RELEASE_FLAGS} -o get-mad
 
 debug: ${SRC}
-	${COMMON_BUILD} ${DEBUG_FLAGS} -o mad-open
+	${COMMON_BUILD} ${DEBUG_FLAGS} -o get-mad
 
 .PHONY: install
 .PHONY: clean

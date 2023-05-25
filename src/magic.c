@@ -4,21 +4,16 @@
 #include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
+#include <string.h>
 
 #include <regex.h>
 #include <unistd.h>
+#include <err.h>
 
 #include <magic.h>
 
 #include "file.h"
 #include "magic.h"
-
-//strlcpy
-#ifdef __linux__
-#include <bsd/string.h>
-#else
-#include <string.h>
-#endif
 
 
 char *get_mimetype(const char *filename, bool text_generic)
@@ -66,8 +61,7 @@ bool magic_grep(const char *filename, const char *mime, Association *rule)
 	file = fopen(filename, "r");
 	if (!file)
 	{
-		perror("Couldn't open rules file");
-		exit(EXIT_FAILURE);
+		err(1, "Couldn't open rules file");
 	}
 
 	bool ret = false;
@@ -96,7 +90,6 @@ bool magic_grep(const char *filename, const char *mime, Association *rule)
 			}
 			*(prog_p) = '\0';
 			rule->nofork = strstr(line_p, "noclose");
-			regfree(&regex);
 			ret = true;
 		}
 		regfree(&regex);

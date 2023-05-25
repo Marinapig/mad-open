@@ -5,12 +5,15 @@
 #include <getopt.h>
 #include <fcntl.h>
 
+#include <err.h>
+
 #include <unistd.h>
 
 #include <magic.h>
 
 #include "file.h"
 #include "magic.h"
+#include "pledge.h"
 
 #define FLAG_TEXT_GENERIC 1 << 0
 #define FLAG_FILE_EXTENSION 1 << 1
@@ -29,8 +32,7 @@ int main(int argc, char **argv)
 			case 'c': 
 			if (!optarg || *optarg == ':')
 			{
-				perror("");
-				return EXIT_FAILURE;
+				err(1, "");
 			}
 			cval = optarg;
 			break;
@@ -50,17 +52,15 @@ int main(int argc, char **argv)
 
 	if (!filename)
 	{
-		perror("Couldn't get rules filename");
-		exit(EXIT_FAILURE);
+		err(1, "Couldn't get rules filename");
 	}
 
-	#ifdef __OpenBSD__
 	unveil(argv[optind], "r");
 	unveil(filename, "r");
 	unveil("/usr/local/share/misc/magic.mgc", "r");
 	unveil(0, 0);
-	pledge("rpath stdio", 0);
-	#endif
+	if (pledge("rpath stdio", 0) == -1)
+		err(1, "pledge");
 
 	char *mime;
 	if (flags & FLAG_FILE_EXTENSION)
@@ -80,16 +80,14 @@ int main(int argc, char **argv)
 
 	Association found;
 	bool didfind = magic_grep(filename, mime, &found);
+	pledge("stdio", 0);
 	if (!cval) 
 		free(filename);
-	#ifdef __OpenBSD__
-	pledge("stdio", 0);
-	#endif
 	if (didfind)
 	{
 		if (!(flags & FLAG_FILE_EXTENSION))
 			free(mime);
-		printf("%s %s", found.nofork ? "-o" : "", found.program);
+		printf("%s -- %s", found.nofork ? "-o" : "", found.program);
 	}
 	else
 	{
