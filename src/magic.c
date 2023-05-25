@@ -72,7 +72,7 @@ bool magic_grep(const char *filename, const char *mime, Association *rule)
 		reset_rule(rule);
 		char* mime_p = rule->mime;
 		char *line_p = line;
-		while (line_p && !isspace(*line_p))
+		while (line_p && mime_p && !isspace(*line_p))
 		{
 			*(mime_p++) = *(line_p++);
 		}
